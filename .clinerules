@@ -1,0 +1,34 @@
+# Project: Slack AI Bot
+
+## Code Style
+
+- Use Prettier for formatting
+- Single quotes for strings
+- 2 spaces for indentation
+- ES5 trailing commas
+- Max line width: 100 characters
+
+## Project Structure
+
+- TypeScript + Node.js + Slack Bolt
+- Socket Mode enabled for Slack connection
+- Source files in src/ directory
+- Built files in dist/ directory
+
+## Environment
+
+- Required env vars: SLACK_BOT_TOKEN, SLACK_SIGNING_SECRET, SLACK_APP_TOKEN
+- Development using ts-node-dev for hot reload
+- Production deployment using Docker
+
+## Slack Bot Features
+
+- Message event handling
+- App mention responses
+- Rich messages using Slack Blocks API
+
+## Development Commands
+
+- npm run dev: Start development server
+- npm run build: Build TypeScript
+- npm start: Run production build
