@@ -1,5 +1,6 @@
 import { App, LogLevel } from '@slack/bolt';
 import dotenv from 'dotenv';
+import { handleAppMention } from './handlers/mentions';
 
 // 環境変数を読み込む
 dotenv.config();
@@ -23,56 +24,12 @@ const app = new App({
 });
 
 // すべてのメッセージをデバッグ用にログ出力
-app.message(async ({ message, say }) => {
+app.message(async ({ message }) => {
   console.log('Received message event:', JSON.stringify(message, null, 2));
 });
 
-// 特定のメッセージ（hello）への応答
-app.message(/hello/i, async ({ message, say }) => {
-  console.log('Received hello message:', JSON.stringify(message, null, 2));
-  // メッセージがユーザーからのものであることを確認
-  if ('user' in message) {
-    try {
-      await say({
-        text: `こんにちは！ <@${message.user}>さん！`,
-        blocks: [
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `こんにちは！ <@${message.user}>さん！\n何かお手伝いできることはありますか？`,
-            },
-          },
-        ],
-      });
-      console.log('Sent response to user:', message.user);
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
-  }
-});
-
 // メンション時の応答
-app.event('app_mention', async ({ event, say }) => {
-  console.log('Received app_mention event:', JSON.stringify(event, null, 2));
-  try {
-    await say({
-      text: `<@${event.user}>さん、呼びましたか？`,
-      blocks: [
-        {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text: `<@${event.user}>さん、呼びましたか？\n何かお手伝いできることはありますか？`,
-          },
-        },
-      ],
-    });
-    console.log('Sent response to mention from user:', event.user);
-  } catch (error) {
-    console.error('Error responding to mention:', error);
-  }
-});
+app.event('app_mention', handleAppMention);
 
 // エラーハンドリング
 app.error(async error => {
