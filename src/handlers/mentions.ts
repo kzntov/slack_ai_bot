@@ -1,36 +1,43 @@
-import { AllMiddlewareArgs, SlackEventMiddlewareArgs } from '@slack/bolt';
+import { App } from '@slack/bolt';
+import { SlackEventPayload } from '../types/slack';
 import { generateResponse } from '../services/anthropic';
+import { getThreadHistory } from '../services/slack';
+import { cleanMessageText } from '../utils/messageFormatter';
 
-type AppMentionEvent = SlackEventMiddlewareArgs<'app_mention'>;
-
-export async function handleAppMention({
-  event,
-  say,
-}: AppMentionEvent & AllMiddlewareArgs): Promise<void> {
-  console.log('Received app_mention event:', JSON.stringify(event, null, 2));
-
+export async function handleAppMention(
+  app: App,
+  event: SlackEventPayload,
+  say: any
+): Promise<void> {
   try {
-    // メンションを除去してプロンプトを作成
-    const prompt = event.text.replace(/<@[^>]+>/g, '').trim();
+    const threadId = event.thread_ts || event.ts;
+    const prompt = cleanMessageText(event.text);
 
     if (!prompt) {
       await say({
         text: `<@${event.user}>さん、何かご質問はありますか？`,
+        thread_ts: threadId,
       });
       return;
     }
 
-    // ユーザーに応答中であることを通知
     await say({
-      text: `<@${event.user}>さん、考えています...`,
+      text: `考えています...`,
+      thread_ts: threadId,
     });
 
+    // スレッド内の会話履歴を取得（スレッド内の場合のみ）
+    const history = event.thread_ts
+      ? await getThreadHistory(app, event.channel, event.thread_ts)
+      : [];
+
     // Anthropic APIを使用して応答を生成
-    const response = await generateResponse(prompt);
+    const response = await generateResponse(prompt, history);
 
     // 応答を送信
     await say({
       text: `<@${event.user}>さん\n${response}`,
+      thread_ts: threadId,
       blocks: [
         {
           type: 'section',
@@ -41,23 +48,11 @@ export async function handleAppMention({
         },
       ],
     });
-
-    console.log('Sent response to mention from user:', event.user);
   } catch (error) {
     console.error('Error responding to mention:', error);
-
-    // エラーメッセージを送信
     await say({
       text: `<@${event.user}>さん、申し訳ありません。エラーが発生しました。`,
-      blocks: [
-        {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text: `<@${event.user}>さん、申し訳ありません。エラーが発生しました。\nしばらく待ってからもう一度お試しください。`,
-          },
-        },
-      ],
+      thread_ts: event.thread_ts || event.ts,
     });
   }
 }
