@@ -15,17 +15,29 @@ const anthropic = new Anthropic({
   apiKey,
 });
 
-export async function generateResponse(prompt: string): Promise<string> {
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export async function generateResponse(
+  prompt: string,
+  history: ChatMessage[] = []
+): Promise<string> {
   try {
+    // 型アサーションを使用して、APIが期待する形式にキャスト
+    const messages = [
+      ...history,
+      {
+        role: 'user' as const,
+        content: prompt,
+      },
+    ];
+
     const message = await anthropic.messages.create({
       model: 'claude-3-7-sonnet-20250219',
       max_tokens: 1024,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
+      messages: messages,
     });
 
     const content = message.content[0];
@@ -37,4 +49,12 @@ export async function generateResponse(prompt: string): Promise<string> {
     console.error('Anthropic APIエラー:', error);
     throw new Error('申し訳ありません。応答の生成中にエラーが発生しました。');
   }
+}
+
+// メッセージを会話履歴用のフォーマットに変換
+export function formatMessageForHistory(text: string, isBot: boolean): ChatMessage {
+  return {
+    role: isBot ? 'assistant' : 'user',
+    content: text.replace(/<@[^>]+>/g, '').trim(), // メンションを除去
+  };
 }
