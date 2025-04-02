@@ -21,11 +21,6 @@ export async function handleAppMention(
       return;
     }
 
-    await say({
-      text: `考えています...`,
-      thread_ts: threadId,
-    });
-
     // スレッド内の会話履歴を取得（スレッド内の場合のみ）
     const history = event.thread_ts
       ? await getThreadHistory(app, event.channel, event.thread_ts)

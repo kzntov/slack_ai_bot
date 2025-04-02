@@ -12,8 +12,20 @@
 
 - TypeScript + Node.js + Slack Bolt
 - Socket Mode enabled for Slack connection
-- Source files in src/ directory
+- Source files in src/ directory:
+  - /handlers: イベントハンドラー（mentions.ts, messages.ts）
+  - /services: 外部サービス連携（anthropic.ts, slack.ts）
+  - /types: 型定義（chat.ts, slack.ts）
+  - /utils: ユーティリティ関数（messageFormatter.ts, threadChecker.ts）
+  - app.ts: メインアプリケーション
 - Built files in dist/ directory
+
+## Directory Responsibilities
+
+- handlers/: Slackイベントのハンドリングとレスポンス生成
+- services/: 外部APIとの連携（Anthropic, Slack API）
+- types/: プロジェクト全体で使用する型定義
+- utils/: 共通のユーティリティ関数
 
 ## Environment
 
@@ -26,6 +38,8 @@
 - Message event handling
 - App mention responses
 - Rich messages using Slack Blocks API
+- Thread context awareness
+- Conversation history management
 
 ## Development Commands
 

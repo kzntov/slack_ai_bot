@@ -1,5 +1,6 @@
 import { Anthropic } from '@anthropic-ai/sdk';
 import dotenv from 'dotenv';
+import { apiLogger } from '../utils/apiLogger';
 
 dotenv.config();
 
@@ -34,10 +35,31 @@ export async function generateResponse(
       },
     ];
 
+    const model = 'claude-3-7-sonnet-20250219';
+    const maxTokens = 1024;
+
+    apiLogger.logRequest({
+      model,
+      maxTokens,
+      contextLength: history.length,
+      messageLength: prompt.length,
+      history: messages,
+      prompt,
+    });
+
     const message = await anthropic.messages.create({
-      model: 'claude-3-7-sonnet-20250219',
-      max_tokens: 1024,
+      model,
+      max_tokens: maxTokens,
       messages: messages,
+    });
+
+    apiLogger.logResponse({
+      inputTokens: message.usage?.input_tokens || 0,
+      outputTokens: message.usage?.output_tokens || 0,
+      totalTokens: (message.usage?.input_tokens || 0) + (message.usage?.output_tokens || 0),
+      model: message.model,
+      role: message.role,
+      contentType: message.content[0].type,
     });
 
     const content = message.content[0];
